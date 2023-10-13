@@ -12,8 +12,17 @@ namespace Vaccination
         static bool run = true;
         public static int numberOfVaccinationDoses = 0;
         public static string underAge = "Nej";
-        public static string inputFile = "C:\\Windows\\Temp\\People.csv";
-        public static string outputFile = "C:\\Windows\\Temp\\Vaccinations.csv";
+        public static string inputFilePath = "C:\\Windows\\Temp\\People.csv";
+        public static string outputFilePath = "C:\\Windows\\Temp\\Vaccinations.csv";
+
+        static string[] mainMenuOptions =
+        {
+            "Skapa prioriteringsordning",
+            "Ändra antal vaccindoser",
+            "Ändra åldersgräns",
+            "Ändra indatafil",
+            "Ändra utdatafil",
+            "Avsluta"};
         public static void Main()
         {
             CultureInfo.CurrentCulture = CultureInfo.InvariantCulture;
@@ -21,27 +30,20 @@ namespace Vaccination
             while (run)
             {
                 Console.Clear();
-                string mainMeny = "Huvudmeny";
-                Presentation(mainMeny);
+                Presentation("Huvudmeny");
 
                 //Info här
                 Console.WriteLine($"Antal tillgängliga vaccindoser: {numberOfVaccinationDoses}");
                 Console.WriteLine($"Vaccinering under 18 år: {underAge}");
-                Console.WriteLine($"Indatafil: {inputFile}");
-                Console.WriteLine($"Utdatafil: {outputFile}");
-
+                Console.WriteLine($"Indatafil: {inputFilePath}");
+                Console.WriteLine($"Utdatafil: {outputFilePath}");
+                
 
                 Console.WriteLine();
-                int mainMenu = ShowMenu("Vad vill du göra?", new[]
-                {
-                    "Skapa prioriteringsordning",
-                    "Ändra antal vaccindoser",
-                    "Ändra åldersgräns",
-                    "Ändra indatafil",
-                    "Ändra utdatafil",
-                    "Avsluta"
-                });
+                int mainMenu = ShowMenu("Vad vill du göra?", mainMenuOptions);
                 Console.Clear();
+
+                Presentation(mainMenuOptions[mainMenu]);
 
                 if (mainMenu == 0)
                 {
@@ -57,11 +59,11 @@ namespace Vaccination
                 }
                 else if (mainMenu == 3)
                 {
-                    ChangeFile(inputFile);
+                    ChangeFile(inputFilePath);
                 }
                 else if (mainMenu == 4)
                 {
-                    ChangeFile(outputFile);
+                    ChangeFile(outputFilePath);
                 }
                 else if (mainMenu == 5)
                 {
@@ -85,24 +87,47 @@ namespace Vaccination
             // Replace with your own code.
             return new string[0];
         }
+
         public static void NewNumberOfDoses()
         {
-            Presentation("Ändra antal vaccindoser");
             Console.Write("Ange nytt antal doser: ");
             numberOfVaccinationDoses = int.Parse(Console.ReadLine());
         }
+
         public static void ChangeAge()
         {
-            Presentation("Ändra åldersgräns");
-            int underTheAge = ShowMenu("Ska personer under 18 vaccineras?", new[]
+            int vaccinateChildren = ShowMenu("Ska personer under 18 vaccineras?", new[]
             {
                         "Ja",
                         "Nej"
                     });
-            underAge = (underTheAge == 0) ? "Ja" : "Nej";
+            underAge = (vaccinateChildren == 0) ? "Ja" : "Nej";
         }
 
-        public static void Presentation (string input)
+        public static void ChangeFile(string oldFile)
+        {
+            if (oldFile == inputFilePath)
+            {
+                Console.Write("Ange ny sökväg: ");
+                inputFilePath = Console.ReadLine();
+            }
+            else
+            {
+                Console.Write("Ange ny sökväg: ");
+                outputFilePath = Console.ReadLine();
+            }
+        }
+
+        public static void Exit()
+        {
+            Console.WriteLine("Hejdå min vän!");
+            Thread.Sleep(1000);
+            run = false;
+        }
+        
+
+
+        public static void Presentation(string input)
         {
             Console.WriteLine(input);
             for (int i = 0; i < input.Length; i++)
@@ -110,28 +135,6 @@ namespace Vaccination
                 Console.Write("-");
             }
             Console.WriteLine();
-        }
-        public static void ChangeFile(string oldFile)
-        {
-            if (oldFile == inputFile)
-            {
-                Presentation("Ändra indatafil");
-                Console.Write("Ange ny sökväg: ");
-                inputFile = Console.ReadLine();
-            }
-            else
-            {
-                Presentation("Ändra utdatafil");
-                Console.Write("Ange ny sökväg: ");
-                outputFile = Console.ReadLine();
-            }
-        }
-
-        public static void Exit ()
-        {
-            Console.WriteLine("Hejdå min vän!");
-            Thread.Sleep(1000);
-            run = false;
         }
 
         public static int ShowMenu(string prompt, IEnumerable<string> options)
