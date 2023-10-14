@@ -1,7 +1,9 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using Microsoft.VisualStudio.TestPlatform.CoreUtilities.Extensions;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Threading;
 
@@ -12,8 +14,8 @@ namespace Vaccination
         static bool run = true;
         public static int numberOfVaccinationDoses = 0;
         public static string underAge = "Nej";
-        public static string inputFilePath = "C:\\Windows\\Temp\\People.csv";
-        public static string outputFilePath = "C:\\Windows\\Temp\\Vaccinations.csv";
+        public static string inputFilePath = @"C:\Windows\Temp\People.csv";
+        public static string outputFilePath = @"C:\Windows\Temp\Vaccinations.csv";
 
         static string[] mainMenuOptions =
         {
@@ -32,7 +34,7 @@ namespace Vaccination
                 Console.Clear();
                 Presentation("Huvudmeny");
 
-                //Info här
+                //Info här:
                 Console.WriteLine($"Antal tillgängliga vaccindoser: {numberOfVaccinationDoses}");
                 Console.WriteLine($"Vaccinering under 18 år: {underAge}");
                 Console.WriteLine($"Indatafil: {inputFilePath}");
@@ -40,32 +42,42 @@ namespace Vaccination
                 
 
                 Console.WriteLine();
-                int mainMenu = ShowMenu("Vad vill du göra?", mainMenuOptions);
+                int mainMenuIndex = ShowMenu("Vad vill du göra?", mainMenuOptions);
                 Console.Clear();
 
-                Presentation(mainMenuOptions[mainMenu]);
+                ReadTheLinesInputCSV(inputFilePath);
 
-                if (mainMenu == 0)
+                Console.WriteLine();
+
+                //var newFile = File.Create(outputFilePath);
+                //newFile.Close();
+                //File.WriteAllText(newPath, blogPost);
+                //var lines = File.ReadAllLines( inputFilePath ).Select(a => a.Split(','));
+                //Console.WriteLine(lines);
+
+                Presentation(mainMenuOptions[mainMenuIndex]);
+
+                if (mainMenuIndex == 0)
                 {
-
+                    OrderOfPriorties();
                 }
-                else if (mainMenu == 1)
+                else if (mainMenuIndex == 1)
                 {
                     NewNumberOfDoses();
                 }
-                else if (mainMenu == 2)
+                else if (mainMenuIndex == 2)
                 {
                     ChangeAge();   
                 }
-                else if (mainMenu == 3)
+                else if (mainMenuIndex == 3)
                 {
                     ChangeFile(inputFilePath);
                 }
-                else if (mainMenu == 4)
+                else if (mainMenuIndex == 4)
                 {
                     ChangeFile(outputFilePath);
                 }
-                else if (mainMenu == 5)
+                else if (mainMenuIndex == 5)
                 {
                     Exit();
                 }
@@ -79,13 +91,62 @@ namespace Vaccination
         //
         // Parameters:
         //
+
+        public static void ReadTheLinesInputCSV(string path)
+        {
+            string[] lines = File.ReadAllLines(path);
+            foreach (string line in lines)
+            {
+                string[] values = line.Split(',');
+                string personnummer = "";
+                int firstVal = int.Parse(values[0].Remove(2));
+                if (!values[0].Contains('-'))
+                {
+                    personnummer = values[0].Insert(values[0].Length - 4, "-");
+
+                    if (firstVal < 23)
+                    {
+                        personnummer = 20 + personnummer;
+                    }
+                    else if (!values[0].StartsWith("19"))
+                    {
+                        personnummer = 19 + personnummer;
+                    }
+                }
+                else if (!values[0].StartsWith("19"))
+                {
+                    personnummer = 19 + values[0];
+                }
+                else
+                {
+                    personnummer = values[0];
+                }
+                string lastName = values[1];
+                string firstName = values[2];
+                int healthEmployee = int.Parse(values[3]);
+                int riskGrupp = int.Parse(values[4]);
+                int infection = int.Parse(values[5]);
+                string healthEmp = (healthEmployee == 0) ? "nej" : "ja";
+                string riskGr = (riskGrupp == 0) ? "Riskgrupp: nej" : "Riskgrupp: ja";
+                string genomgåttInf = (infection == 0) ? "Genomgått inf: nej" : "Genomgått inf: ja";
+                Console.WriteLine($"Namn: {firstName} {lastName}, personnr: {personnummer}. Anställd inom vård och omsorg: {healthEmp}. {riskGr}. {genomgåttInf}");
+            }
+
+        }
+
         // input: the lines from a CSV file containing population information
         // doses: the number of vaccine doses available
         // vaccinateChildren: whether to vaccinate people younger than 18
         public static string[] CreateVaccinationOrder(string[] input, int doses, bool vaccinateChildren)
         {
-            // Replace with your own code.
+
+
             return new string[0];
+        }
+
+        public static void OrderOfPriorties()
+        {
+            
         }
 
         public static void NewNumberOfDoses()
