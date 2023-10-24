@@ -142,7 +142,7 @@ namespace Vaccination
                     Person person = new(firstName, lastName, socialSecutiryNumber, healthEmployee, riskGroup, recentInfections);
                     listOfPeople.Add(person);
                 }
-                CheckDateOfBirth(listOfPeople);
+                SortDateOfBirth(listOfPeople);
                 //return new string[0];
             }
 
@@ -152,36 +152,15 @@ namespace Vaccination
 
             }
 
-            public static void CheckDateOfBirth(List <Person> lista)
+            public static void SortDateOfBirth(List <Person> lista)
             {
-                for (int i = 0; i < lista.Count; i++)
-                {
-                    for (int j = i; j < lista.Count; j++)
-                    {
-                        int age = 2023 - MakeASubstring(lista[i], 0, 4);
-                        if (age < 2023 - MakeASubstring(lista[j], 0, 4))
-                        {
-                            int month = MakeASubstring(lista[i], 4, 2);
-                            if (month < MakeASubstring(lista[j], 4, 2))
-                            {
-                                int day = MakeASubstring(lista[i], 6, 2);
-                                if (day < MakeASubstring(lista[j], 6, 2))
-                                {
-                                    (lista[i], lista[j]) = (lista[j], lista[i]);
-                                }
-                                (lista[i], lista[j]) = (lista[j], lista[i]);
-                            }
-                            (lista[i], lista[j]) = (lista[j], lista[i]);
-                        }
-                    }
-                    Console.WriteLine(lista[i].FirstName + " " + lista[i].SocialSecurityNumber);
-                }
-            }
 
-            public static int MakeASubstring (Person person, int a, int b)
-            {
-                int date = int.Parse(person.SocialSecurityNumber.Substring(a, b));
-                return date;
+                lista = lista.OrderBy(q => q.SocialSecurityNumber).ToList();
+                
+                for (int i = 0; i <lista.Count; i++) 
+                {
+                    Console.WriteLine(lista[i].FirstName + " " + lista[i].SocialSecurityNumber);
+                }                
             }
 
             public static void NewNumberOfDoses()
@@ -229,18 +208,28 @@ namespace Vaccination
                 {
                     socialSecurityNumber = value[0].Insert(value[0].Length - 4, "-");
 
-                    if (firstVal < 23)
+                    if (!value[0].StartsWith("19"))
                     {
-                        socialSecurityNumber = 20 + socialSecurityNumber;
-                    }
-                    else if (!value[0].StartsWith("19"))
-                    {
-                        socialSecurityNumber = 19 + socialSecurityNumber;
+                        if (firstVal < 23)
+                        {
+                            socialSecurityNumber = 20 + socialSecurityNumber;
+                        }
+                        else
+                        {
+                            socialSecurityNumber = 19 + socialSecurityNumber;
+                        }
                     }
                 }
                 else if (!value[0].StartsWith("19"))
                 {
-                    socialSecurityNumber = 19 + value[0];
+                    if (firstVal < 23)
+                    {
+                        socialSecurityNumber = 20 + value[0];
+                    }
+                    else
+                    {
+                        socialSecurityNumber = 19 + value[0];
+                    }
                 }
                 else
                 {
