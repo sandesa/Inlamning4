@@ -90,10 +90,7 @@ namespace Vaccination
 
                 if (mainMenuIndex == 0)
                 {
-                    string[] outPut = CreateVaccinationOrder(File.ReadAllLines(inputFilePath), numberOfVaccinationDoses, underAge);
-                    File.WriteAllLines(outputFilePath, outPut);
-                    Console.WriteLine("Resultatet har sparats i " + outputFilePath);
-                    Thread.Sleep(2000);
+                    VaccinationOrder();
                 }
                 else if (mainMenuIndex == 1)
                 {
@@ -118,13 +115,14 @@ namespace Vaccination
             }
         }
 
-        // Create the lines that should be saved to a CSV file after creating the vaccination order.
-        //
-        // Parameters:
-        //
-        // input: the lines from a CSV file containing population information
-        // doses: the number of vaccine doses available
-        // vaccinateChildren: whether to vaccinate people younger than 18
+        public static void VaccinationOrder()
+        {
+            string[] outPut = CreateVaccinationOrder(File.ReadAllLines(inputFilePath), numberOfVaccinationDoses, underAge);
+            File.WriteAllLines(outputFilePath, outPut);
+            Console.WriteLine("Resultatet har sparats i " + outputFilePath);
+            Thread.Sleep(2000);
+        }
+        
         public static string[] CreateVaccinationOrder(string[] input, int doses, bool vaccinateChildren)
         {
             string[] prio = new string[input.Length];
@@ -141,35 +139,71 @@ namespace Vaccination
                 listOfPeople.Add(person);
             }
             SortListOfPeople(listOfPeople);
+
+            int tempVarDoses = doses;
+
             foreach (Person person in listOfPeople)
             {
-                if (doses > 0 && vaccinateChildren)
+                
+                if (vaccinateChildren)
                 {
                     int dose = person.RecentInfection == 1 ? 1 : 2;
-                    OrderOfPriority order = new(person.SocialSecurityNumber, person.LastName, person.FirstName, dose);
-                    listOfPriorities.Add(order);
+                    if (tempVarDoses == 1 && dose == 1)
+                    {
+                        OrderOfPriority order = new(person.SocialSecurityNumber, person.LastName, person.FirstName, dose);
+                        listOfPriorities.Add(order);
+                        tempVarDoses -= dose;
+                    }
+                    else if (tempVarDoses < 1)
+                    {
+                        dose = 0;
+                        OrderOfPriority order = new(person.SocialSecurityNumber, person.LastName, person.FirstName, dose);
+                        listOfPriorities.Add(order);
+                    }
+                    else
+                    {
+                        OrderOfPriority order = new(person.SocialSecurityNumber, person.LastName, person.FirstName, dose);
+                        listOfPriorities.Add(order);
+                        tempVarDoses -= dose;
+                    }
                 }
                 else if (!vaccinateChildren)
                 {
                     int birthYear = int.Parse(person.SocialSecurityNumber.Substring(0, 4));
                     DateTime localTime = DateTime.Now;
-                    if (localTime.Year - birthYear > 18)
+                    if (localTime.Year - birthYear >= 18)
                     {
                         int dose = person.RecentInfection == 1 ? 1 : 2;
-                        OrderOfPriority order = new(person.SocialSecurityNumber, person.LastName, person.FirstName, dose);
-                        listOfPriorities.Add(order);
+                        if (tempVarDoses == 1 && dose == 1)
+                        {
+                            OrderOfPriority order = new(person.SocialSecurityNumber, person.LastName, person.FirstName, dose);
+                            listOfPriorities.Add(order);
+                            tempVarDoses -= dose;
+                        }
+                        else if (tempVarDoses < 1)
+                        {
+                            dose = 0;
+                            OrderOfPriority order = new(person.SocialSecurityNumber, person.LastName, person.FirstName, dose);
+                            listOfPriorities.Add(order);
+                        }
+                        else
+                        {
+                            OrderOfPriority order = new(person.SocialSecurityNumber, person.LastName, person.FirstName, dose);
+                            listOfPriorities.Add(order);
+                            tempVarDoses -= dose;
+                        }
                     }
                 }
             }
-            List<string> lista = new();
+            List<string> list = new();
             foreach (OrderOfPriority order in listOfPriorities)
             {
                 string person = order.SocialSecurityNumber + "," + order.LastName + "," + order.FirstName + "," + order.NumberOfVaccinations;
-                lista.Add(person);
+                list.Add(person);
             }
-            string[] ArrayToOutput = lista.ToArray();
+            string[] OutpurArray = list.ToArray();
 
-            return ArrayToOutput;
+            return OutpurArray;
         }
 
 
@@ -403,12 +437,12 @@ namespace Vaccination
             bool vaccinateChildren = false;
 
             // Act
-            //string[] output = Program.CreateVaccinationOrder(input, doses, vaccinateChildren);
+            string[] output = Program.CreateVaccinationOrder(input, doses, vaccinateChildren);
 
             // Assert
-            //Assert.AreEqual(output.Length, 2);
-            //Assert.AreEqual("19810203-2222,Efternamnsson,Eva,2", output[0]);
-            //Assert.AreEqual("19720906-1111,Elba,Idris,1", output[1]);
+            Assert.AreEqual(output.Length, 2);
+            Assert.AreEqual("19810203-2222,Efternamnsson,Eva,2", output[0]);
+            Assert.AreEqual("19720906-1111,Elba,Idris,1", output[1]);
         }
     }
 } 
