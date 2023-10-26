@@ -5,9 +5,8 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading;
-using System.Transactions;
 
-namespace Vaccination
+namespace Vaccinations
 {
     public class Person
     {
@@ -137,7 +136,7 @@ namespace Vaccination
                     {
                         if (File.Exists(outputFilePath) && executeDataTransformation)
                         {
-                            int warning = ShowMenu("Varning: outputfilen finns redan. Vill du skriva över den?", new[]
+                            int warning = ShowMenu("Varning: utdatafilen " + outputFilePath + " finns redan. Vill du skriva över den?", new[]
                             {
                                     "Ja",
                                     "Nej"
@@ -235,33 +234,24 @@ namespace Vaccination
         {
             try
             {
-                string socialSecurityNumber = "";
-                int firstVal = int.Parse(value[0].Remove(2));
-                if (!value[0].Contains('-'))
-                {
-                    socialSecurityNumber = value[0].Insert(value[0].Length - 4, "-");
+                string socialSecurityNumber = value[0];
+                int firstVal = int.Parse(socialSecurityNumber.Remove(2));
+                int hyphenIndex = socialSecurityNumber.Length - 5;
 
-                    if (!value[0].StartsWith("19"))
-                    {
-                        if (firstVal < 23)
-                        {
-                            socialSecurityNumber = 20 + socialSecurityNumber;
-                        }
-                        else
-                        {
-                            socialSecurityNumber = 19 + socialSecurityNumber;
-                        }
-                    }
+                if (socialSecurityNumber[hyphenIndex] != '-')
+                {
+                    socialSecurityNumber = socialSecurityNumber.Insert(hyphenIndex + 1, "-");
                 }
-                else if (!value[0].StartsWith("19"))
+
+                if (!socialSecurityNumber.StartsWith("19"))
                 {
                     if (firstVal < 23)
                     {
-                        socialSecurityNumber = 20 + value[0];
+                        socialSecurityNumber = 20 + socialSecurityNumber;
                     }
                     else
                     {
-                        socialSecurityNumber = 19 + value[0];
+                        socialSecurityNumber = 19 + socialSecurityNumber;
                     }
                 }
                 else
@@ -270,9 +260,9 @@ namespace Vaccination
                 }
                 return socialSecurityNumber;
             }
-            catch (ArgumentOutOfRangeException ex)
+            catch (FormatException)
             {
-                Console.WriteLine("Fel inmatning av personnummer: " + ex.Message);
+                executeDataTransformation = false;
                 return string.Empty;
             }
         }
@@ -331,47 +321,71 @@ namespace Vaccination
 
         public static string[] CreateVaccinationOrder(string[] input, int doses, bool vaccinateChildren)
         {
-            try
+            foreach (string line in input)
             {
-                foreach (string line in input)
+                string[] values = line.Split(',');
+                if (!(values.Length == 6))
                 {
-                    string[] values = line.Split(',');
-                    if (!(values.Length == 6))
-                    {
-                        Console.WriteLine("Felaktig indata: " + line);
-                        executeDataTransformation = false;
-                        continue;
-                    }
-                    if (SocialSecurityNumber(values).Length < 10 || SocialSecurityNumber(values).Length > 13)
-                    {
-                        Console.WriteLine("Felaktigt indata: " + line);
-                        executeDataTransformation = false;
-                        continue;
-                    }
-                    if (!int.TryParse(values[3], out int healthEmp) || !(values[3] == "1" || values[3] == "0")
-                        || !int.TryParse(values[4], out int riskGr) || !(values[4] == "1" || values[4] == "0")
-                        || !int.TryParse(values[5], out int recentInf) || !(values[5] == "1" || values[5] == "0"))
-                    {
-                        Console.WriteLine("Felaktiga värden: " + line);
-                        executeDataTransformation = false;
-                        continue;
-                    }
-                    string firstName = values[2];
-                    string lastName = values[1];
-                    string socialSecutiryNumber = SocialSecurityNumber(values);
-                    int healthEmployee = int.Parse(values[3]);
-                    int riskGroup = int.Parse(values[4]);
-                    int recentInfections = int.Parse(values[5]);
-                    Person person = new(firstName, lastName, socialSecutiryNumber, healthEmployee, riskGroup, recentInfections);
-                    people.Add(person);
+                    Console.WriteLine("Felaktig indata: " + line);
+                    executeDataTransformation = false;
+                    continue;
                 }
-                SortListOfPeople(people);
-
-                int numberOFVaccinesLeft = doses;
-
-                foreach (Person person in people)
+                if (SocialSecurityNumber(values).Length != 13)
                 {
-                    if (vaccinateChildren)
+                    Console.WriteLine("Felaktigt indata av personnummer: " + line);
+                    executeDataTransformation = false;
+                    continue;
+                }
+                if (!int.TryParse(values[3], out int healthEmp) || !(values[3] == "1" || values[3] == "0")
+                    || !int.TryParse(values[4], out int riskGr) || !(values[4] == "1" || values[4] == "0")
+                    || !int.TryParse(values[5], out int recentInf) || !(values[5] == "1" || values[5] == "0"))
+                {
+                    Console.WriteLine("Felaktiga värden: " + line);
+                    executeDataTransformation = false;
+                    continue;
+                }
+                string firstName = values[2];
+                string lastName = values[1];
+                string socialSecutiryNumber = SocialSecurityNumber(values);
+                int healthEmployee = int.Parse(values[3]);
+                int riskGroup = int.Parse(values[4]);
+                int recentInfections = int.Parse(values[5]);
+                Person person = new(firstName, lastName, socialSecutiryNumber, healthEmployee, riskGroup, recentInfections);
+                people.Add(person);
+            }
+            SortListOfPeople(people);
+
+            int numberOFVaccinesLeft = doses;
+
+            foreach (Person person in people)
+            {
+                if (vaccinateChildren)
+                {
+                    int dose = person.RecentInfection == 1 ? 1 : 2;
+                    if (numberOFVaccinesLeft == 1 && dose == 1)
+                    {
+                        PersonToVaccinate personToVaccinate = new(person.SocialSecurityNumber, person.LastName, person.FirstName, dose);
+                        priorityList.Add(personToVaccinate);
+                        numberOFVaccinesLeft -= dose;
+                    }
+                    else if (numberOFVaccinesLeft < 1)
+                    {
+                        dose = 0;
+                        PersonToVaccinate personToVaccinate = new(person.SocialSecurityNumber, person.LastName, person.FirstName, dose);
+                        priorityList.Add(personToVaccinate);
+                    }
+                    else
+                    {
+                        PersonToVaccinate personToVaccinate = new(person.SocialSecurityNumber, person.LastName, person.FirstName, dose);
+                        priorityList.Add(personToVaccinate);
+                        numberOFVaccinesLeft -= dose;
+                    }
+                }
+                else if (!vaccinateChildren)
+                {
+                    int birthYear = int.Parse(person.SocialSecurityNumber.Substring(0, 4));
+                    DateTime localTime = DateTime.Now;
+                    if (localTime.Year - birthYear >= 18)
                     {
                         int dose = person.RecentInfection == 1 ? 1 : 2;
                         if (numberOFVaccinesLeft == 1 && dose == 1)
@@ -393,58 +407,19 @@ namespace Vaccination
                             numberOFVaccinesLeft -= dose;
                         }
                     }
-                    else if (!vaccinateChildren)
-                    {
-                        int birthYear = int.Parse(person.SocialSecurityNumber.Substring(0, 4));
-                        DateTime localTime = DateTime.Now;
-                        if (localTime.Year - birthYear >= 18)
-                        {
-                            int dose = person.RecentInfection == 1 ? 1 : 2;
-                            if (numberOFVaccinesLeft == 1 && dose == 1)
-                            {
-                                PersonToVaccinate personToVaccinate = new(person.SocialSecurityNumber, person.LastName, person.FirstName, dose);
-                                priorityList.Add(personToVaccinate);
-                                numberOFVaccinesLeft -= dose;
-                            }
-                            else if (numberOFVaccinesLeft < 1)
-                            {
-                                dose = 0;
-                                PersonToVaccinate personToVaccinate = new(person.SocialSecurityNumber, person.LastName, person.FirstName, dose);
-                                priorityList.Add(personToVaccinate);
-                            }
-                            else
-                            {
-                                PersonToVaccinate personToVaccinate = new(person.SocialSecurityNumber, person.LastName, person.FirstName, dose);
-                                priorityList.Add(personToVaccinate);
-                                numberOFVaccinesLeft -= dose;
-                            }
-                        }
-                    }
                 }
+            }
 
-                List<string> list = new();
-                foreach (PersonToVaccinate personToVaccinate in priorityList)
-                {
-                    string person = personToVaccinate.SocialSecurityNumber + "," + personToVaccinate.LastName + "," + personToVaccinate.FirstName + 
-                                    "," + personToVaccinate.NumberOfVaccinations;
-                    list.Add(person);
-                }
-                string[] OutpurArray = list.ToArray();
+            List<string> list = new();
+            foreach (PersonToVaccinate personToVaccinate in priorityList)
+            {
+                string person = personToVaccinate.SocialSecurityNumber + "," + personToVaccinate.LastName + "," + personToVaccinate.FirstName +
+                                "," + personToVaccinate.NumberOfVaccinations;
+                list.Add(person);
+            }
+            string[] OutpurArray = list.ToArray();
 
-                return OutpurArray;
-            }
-            catch (FormatException ex)
-            {
-                Console.WriteLine("Error parsing data: " + ex.Message);
-                executeDataTransformation = false;
-                return Array.Empty<string>();
-            }
-            catch (IndexOutOfRangeException ex)
-            {
-                Console.WriteLine("Fel inmatning av personnummer: " + ex.Message);
-                executeDataTransformation = false;
-                return Array.Empty<string>();
-            }
+            return OutpurArray;
         }
 
 
