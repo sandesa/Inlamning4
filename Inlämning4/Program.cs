@@ -619,4 +619,5 @@ namespace Vaccinations
             Assert.AreEqual("19810203-2222,Johnson,Emily,0", output[1]);
         }
     }
+
 }
