@@ -131,7 +131,7 @@ namespace Vaccinations
             {
                 if (File.Exists(inputFilePath))
                 {
-                    string[] outPut = CreateVaccinationOrder(File.ReadAllLines(inputFilePath), numberOfVaccinationDoses, underAge);
+                    string[] outPutData = CreateVaccinationOrder(File.ReadAllLines(inputFilePath), numberOfVaccinationDoses, underAge);
                     if (Directory.Exists(Path.GetDirectoryName(outputFilePath)))
                     {
                         if (File.Exists(outputFilePath) && executeDataTransformation)
@@ -145,21 +145,21 @@ namespace Vaccinations
                         }
                         if (executeDataTransformation)
                         {
-                            File.WriteAllLines(outputFilePath, outPut);
+                            File.WriteAllLines(outputFilePath, outPutData);
                             Console.WriteLine("Resultatet har sparats i " + outputFilePath);
                         }
                     }
                     else
                     {
-                        Console.WriteLine("Mappen för outputfil ej funnen: " + Path.GetDirectoryName(outputFilePath));
-                        Console.WriteLine("Vänligen skriv in en ny output filepath: ");
+                        Console.WriteLine("Mappen för utdatafilen ej funnen: " + Path.GetDirectoryName(outputFilePath));
+                        Console.WriteLine("Vänligen skriv in en ny sökväg för utdatafilen: ");
                         ChangeFile(outputFilePath);
                     }
                 }
                 else
                 {
-                    Console.WriteLine("Inputfil ej funnen: " + inputFilePath);
-                    Console.WriteLine("Vänligen skriv in en ny input filepath: ");
+                    Console.WriteLine("Indatafil ej funnen: " + inputFilePath);
+                    Console.WriteLine("Vänligen skriv in en ny sökväg för indatafilen: ");
                     ChangeFile(inputFilePath);
                 }
             }
@@ -229,23 +229,23 @@ namespace Vaccinations
         }
 
 
-
-        public static string SocialSecurityNumber(string[] value)
+        public static string SocialSecurityNumberFormat(string socialSecurityNumber)
         {
             try
             {
-                string socialSecurityNumber = value[0];
-                int firstVal = int.Parse(socialSecurityNumber.Remove(2));
                 int hyphenIndex = socialSecurityNumber.Length - 5;
-
                 if (socialSecurityNumber[hyphenIndex] != '-')
                 {
                     socialSecurityNumber = socialSecurityNumber.Insert(hyphenIndex + 1, "-");
                 }
-
-                if (!socialSecurityNumber.StartsWith("19"))
+                if (socialSecurityNumber.Length == 13 && (socialSecurityNumber.StartsWith("19") || socialSecurityNumber.StartsWith("20")))
                 {
-                    if (firstVal < 23)
+                    return socialSecurityNumber;
+                }
+                else
+                {
+                    int birthYear = int.Parse(socialSecurityNumber.Substring(0, 2));
+                    if (birthYear < 23)
                     {
                         socialSecurityNumber = 20 + socialSecurityNumber;
                     }
@@ -253,10 +253,6 @@ namespace Vaccinations
                     {
                         socialSecurityNumber = 19 + socialSecurityNumber;
                     }
-                }
-                else
-                {
-                    socialSecurityNumber = value[0];
                 }
                 return socialSecurityNumber;
             }
@@ -268,6 +264,7 @@ namespace Vaccinations
         }
 
 
+
         public static void SortListOfPeople(List<Person> list)
         {
             list.Sort((p1, p2) =>
@@ -276,7 +273,7 @@ namespace Vaccinations
                 {
                     return -1;
                 }
-                else if (!(p1.HealthEmployee == 1) && p2.HealthEmployee == 1)
+                else if (p1.HealthEmployee != 1 && p2.HealthEmployee == 1)
                 {
                     return 1;
                 }
@@ -330,7 +327,7 @@ namespace Vaccinations
                     executeDataTransformation = false;
                     continue;
                 }
-                string socialSecutiryNumber = SocialSecurityNumber(values);
+                string socialSecutiryNumber = SocialSecurityNumberFormat(values[0]);
                 if (socialSecutiryNumber.Length != 13)
                 {
                     Console.WriteLine("Felaktigt indata av personnummer: " + line);
@@ -619,5 +616,4 @@ namespace Vaccinations
             Assert.AreEqual("19810203-2222,Johnson,Emily,0", output[1]);
         }
     }
-
 }
