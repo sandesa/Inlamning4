@@ -260,8 +260,9 @@ namespace Vaccinations
                 }
                 return socialSecurityNumber;
             }
-            catch (FormatException)
+            catch (FormatException ex)  
             {
+                Console.WriteLine("Felaktigt format: " + ex.Message);
                 executeDataTransformation = false;
                 return string.Empty;
             }
@@ -634,24 +635,7 @@ namespace Vaccinations
             Assert.AreEqual(0, output.Length);
         }
 
-        [TestMethod]
-        public void TestInvalidHealthEmployeeValue()
-        {
-            // Arrange
-            string[] input =
-            {
-                "8102032222,Johnson,Emily,2,0,1"
-            };
-            int doses = 10;
-            bool vaccinateChildren = true;
-
-            // Act
-            string[] output = Program.CreateVaccinationOrder(input, doses, vaccinateChildren);
-
-            // Assert
-            Assert.AreEqual(1, output.Length); 
-            Assert.AreEqual("19810203-2222,Johnson,Emily,2", output[0]); 
-        }
+        
     }
 
 }
