@@ -618,6 +618,40 @@ namespace Vaccinations
             Assert.AreEqual("19720906-1111,Smith,John,1", output[0]);
             Assert.AreEqual("19810203-2222,Johnson,Emily,0", output[1]);
         }
+
+        [TestMethod]
+        public void TestNoInputData()
+        {
+            //Arrange
+            string[] input = {};
+            int doses = 10;
+            bool vaccinateChildren = true;
+
+            // Act
+            string[] output = Program.CreateVaccinationOrder(input, doses, vaccinateChildren);
+            
+            // Assert
+            Assert.AreEqual(0, output.Length);
+        }
+
+        [TestMethod]
+        public void TestInvalidHealthEmployeeValue()
+        {
+            // Arrange
+            string[] input =
+            {
+                "8102032222,Johnson,Emily,2,0,1"
+            };
+            int doses = 10;
+            bool vaccinateChildren = true;
+
+            // Act
+            string[] output = Program.CreateVaccinationOrder(input, doses, vaccinateChildren);
+
+            // Assert
+            Assert.AreEqual(1, output.Length); 
+            Assert.AreEqual("19810203-2222,Johnson,Emily,2", output[0]); 
+        }
     }
 
 }
