@@ -131,7 +131,7 @@ namespace Vaccinations
             {
                 if (File.Exists(inputFilePath))
                 {
-                    string[] outPutData = CreateVaccinationOrder(File.ReadAllLines(inputFilePath), numberOfVaccinationDoses, underAge);
+                    string[] outputData = CreateVaccinationOrder(File.ReadAllLines(inputFilePath), numberOfVaccinationDoses, underAge);
                     if (Directory.Exists(Path.GetDirectoryName(outputFilePath)))
                     {
                         if (File.Exists(outputFilePath) && executeDataTransformation)
@@ -145,7 +145,7 @@ namespace Vaccinations
                         }
                         if (executeDataTransformation)
                         {
-                            File.WriteAllLines(outputFilePath, outPutData);
+                            File.WriteAllLines(outputFilePath, outputData);
                             Console.WriteLine("Resultatet har sparats i " + outputFilePath);
                         }
                     }
@@ -256,9 +256,8 @@ namespace Vaccinations
                 }
                 return socialSecurityNumber;
             }
-            catch (FormatException ex)  
+            catch (FormatException)  
             {
-                Console.WriteLine("Felaktigt format: " + ex.Message);
                 executeDataTransformation = false;
                 return string.Empty;
             }
@@ -278,6 +277,7 @@ namespace Vaccinations
                 {
                     return 1;
                 }
+
                 int birthYearP1 = int.Parse(p1.SocialSecurityNumber.Substring(0, 4));
                 int birthYearP2 = int.Parse(p2.SocialSecurityNumber.Substring(0, 4));
                 DateTime localTime = DateTime.Now;
@@ -631,7 +631,5 @@ namespace Vaccinations
             // Assert
             Assert.AreEqual(0, output.Length);
         }
-
-        
     }
 }
