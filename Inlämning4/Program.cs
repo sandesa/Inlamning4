@@ -266,55 +266,16 @@ namespace Vaccinations
         }
 
 
-        public static void SortListOfPeople(List<Person> list)
+        public static List<Person> SortListOfPeople(List<Person> list)
         {
-            list.Sort((p1, p2) =>
-            {
-                if (p1.HealthEmployee == 1 && p2.HealthEmployee != 1)
-                {
-                    return -1;
-                }
-                else if (p1.HealthEmployee != 1 && p2.HealthEmployee == 1)
-                {
-                    return 1;
-                }
+            DateTime localTime = DateTime.Now;
 
-                int birthYearP1 = int.Parse(p1.SocialSecurityNumber.Substring(0, 4));
-                int birthYearP2 = int.Parse(p2.SocialSecurityNumber.Substring(0, 4));
-                DateTime localTime = DateTime.Now;
+            list = list.OrderByDescending(p => p.HealthEmployee == 1)
+                       .ThenByDescending(p => localTime.Year - int.Parse(p.SocialSecurityNumber.Substring(0, 8)) >= 65)
+                       .ThenByDescending(p => p.RiskGroup)
+                       .ThenBy(p => p.SocialSecurityNumber.Substring(0, 8)).ToList();
 
-                if (localTime.Year - birthYearP1 >= 65 && !(localTime.Year - birthYearP2 >= 65))
-                {
-                    return -1;
-                }
-                else if (!(localTime.Year - birthYearP1 >= 65) && localTime.Year - birthYearP2 >= 65)
-                {
-                    return 1;
-                }
-
-                if (p1.RiskGroup == 1 && p2.RiskGroup != 1)
-                {
-                    return -1;
-                }
-                else if (!(p1.RiskGroup == 1) && p2.RiskGroup == 1)
-                {
-                    return 1;
-                }
-
-                int birthDateP1 = int.Parse(p1.SocialSecurityNumber.Substring(0, 8));
-                int birthDateP2 = int.Parse(p2.SocialSecurityNumber.Substring(0, 8));
-                int ageCompare = birthDateP1 - birthDateP2;
-
-                if (ageCompare < 0)
-                {
-                    return -1;
-                }
-                else if (ageCompare > 0)
-                {
-                    return 1;
-                }
-                return 0;
-            });
+            return list;
         }
 
 
@@ -382,10 +343,10 @@ namespace Vaccinations
                 people.Add(person);
             }
 
-            SortListOfPeople(people);
+            List<Person> sortedList = SortListOfPeople(people);
             int vaccinesLeft = doses;
             int index = 0;
-            foreach (Person person in people)
+            foreach (Person person in sortedList)
             {
                 if (vaccinateChildren)
                 {
